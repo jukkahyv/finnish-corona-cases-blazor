@@ -6,9 +6,16 @@ Finnish corona data
 
 <div id="container"></div>
 
+Data source: <a href="https://github.com/HS-Datadesk/koronavirus-avoindata">HS open data</a>.
+
 @code {
 
     private CasesPerDay[] casesPerDay;
+
+    private long GetJsTime(DateTime time)
+    {
+        return (long)(time - new DateTime(1970, 1, 1)).TotalMilliseconds;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -19,11 +26,11 @@ Finnish corona data
         var dataSeries = new
         {
             Name = "Cases",
-            Data = casesPerDay.Select(p => new object[] { p.Date, p.Count }).ToArray()
+            Data = casesPerDay.Select(p => new object[] { GetJsTime(p.Date), p.Count }).ToArray()
         };
 
-        var highchartsData = new { Title = "Cases per day", Series = new[] { dataSeries }};
-        System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(highchartsData));
+        var highchartsData = new { Title = "Cases per day", XAxis = new { Type = "datetime" }, Series = new[] { dataSeries }};
+        //System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(highchartsData));
         await JSRuntime.InvokeVoidAsync("Highcharts.chart", "container", highchartsData);
     }
 
@@ -37,8 +44,9 @@ Finnish corona data
                 Date = c.Key,
                 Count = c.Count()
             })
+            .OrderBy(c => c.Date)
             .ToArray();
-        System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(casesPerDay));
+        //System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(casesPerDay));
     }
 
     public class HSCoronaResult

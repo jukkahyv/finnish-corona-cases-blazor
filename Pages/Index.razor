@@ -1,0 +1,63 @@
+﻿@page "/"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+Finnish corona data
+
+<div id="container"></div>
+
+@code {
+
+    private CasesPerDay[] casesPerDay;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (casesPerDay == null)
+            return;
+
+        var dataSeries = new
+        {
+            Name = "Cases",
+            Data = casesPerDay.Select(p => new object[] { p.Date, p.Count }).ToArray()
+        };
+
+        var highchartsData = new { Title = "Cases per day", Series = new[] { dataSeries }};
+        System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(highchartsData));
+        await JSRuntime.InvokeVoidAsync("Highcharts.chart", "container", highchartsData);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetJsonAsync<HSCoronaResult>("https://w3qa5ydb4l.execute-api.eu-west-1.amazonaws.com/prod/finnishCoronaData");
+        casesPerDay = result.Confirmed.Select(c => new { c.Date.Date })
+            .GroupBy(c => c.Date)
+            .Select(c => new CasesPerDay
+            {
+                Date = c.Key,
+                Count = c.Count()
+            })
+            .ToArray();
+        System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(casesPerDay));
+    }
+
+    public class HSCoronaResult
+    {
+        public HSCoronaCase[] Confirmed { get; set; }
+    }
+
+    public class HSCoronaCase
+    {
+        public DateTime Date { get; set; }
+
+        public string Id { get; set; }
+
+    }
+
+    public class CasesPerDay
+    {
+        public DateTime Date { get; set; }
+        public int Count { get; set; }
+    }
+
+}

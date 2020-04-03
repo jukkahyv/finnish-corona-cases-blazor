@@ -29,11 +29,21 @@
 
         var dataSeries = new
         {
-            Name = "Cases",
+            Name = "Daily cases",
             Data = casesPerDay.Select(p => new object[] { GetJsTime(p.Date), p.Count }).ToArray()
         };
 
-        var highchartsData = new { Title = "Cases per day", XAxis = new { Type = "datetime" }, Series = new[] { dataSeries }};
+        var averagePeriod = 4;
+
+		var averages = casesPerDay.Select(p => new { p.Date, Count = Math.Floor(casesPerDay.Where(p2 => p2.Date >= p.Date - TimeSpan.FromDays(averagePeriod) && p2.Date <= p.Date + TimeSpan.FromDays(averagePeriod)).Average(p3 => p3.Count)) }).ToArray();
+
+        var avgSeries = new
+        {
+            Name = "Trend (weekly average)",
+            Data = averages.Select(p => new object[] { GetJsTime(p.Date), p.Count }).ToArray()
+        };
+
+        var highchartsData = new { Title = "Cases per day", XAxis = new { Type = "datetime" }, Series = new[] { dataSeries, avgSeries }};
         //System.Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(highchartsData));
         await JSRuntime.InvokeVoidAsync("Highcharts.chart", "container", highchartsData);
     }

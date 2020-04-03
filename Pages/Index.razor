@@ -41,7 +41,7 @@
     protected override async Task OnInitializedAsync()
     {
         var start = new DateTime(2020, 2, 26);
-        var result = await Http.GetJsonAsync<HSCoronaResult>("https://w3qa5ydb4l.execute-api.eu-west-1.amazonaws.com/prod/finnishCoronaData");
+        var result = await Http.GetJsonAsync<HSCoronaResult>("https://w3qa5ydb4l.execute-api.eu-west-1.amazonaws.com/prod/finnishCoronaData/v2");
         casesPerDay = result.Confirmed
             .Where(c => c.Date > start)
             .Select(c => new { c.Date.Date })
